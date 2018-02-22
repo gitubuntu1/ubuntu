@@ -45,6 +45,7 @@ RUN apt-get -q update && \
 	ethstatus \
 	file \
 	fio \
+	grub-efi \
 	haveged \
 	htop \
 	ioping \
@@ -54,6 +55,7 @@ RUN apt-get -q update && \
 	iputils-ping \
 	isc-dhcp-client \
 	less \
+	linux-image-generic \
 	locate \
 	lsb-release \
 	lsof \
@@ -111,16 +113,7 @@ RUN systemctl set-default multi-user
 
 
 # Configure Systemd
-RUN systemctl enable \
-    scw-fetch-ssh-keys \
-	scw-sync-kernel-modules \
-	scw-generate-ssh-keys \
-	scw-kernel-check \
- && systemctl disable \
-	kmod-static-nodes.service \
-	proc-sys-fs-binfmt_misc.automount \
-	systemd-modules-load.service \
-	systemd-update-utmp-runlevel
+RUN systemctl preset --preset-mode=full $(cat /etc/systemd/system-preset/scw*.preset | cut -d' ' -f2 | tr '\n' ' ')
 
 
 # make /sbin/init a relative symlink for initrd boot
@@ -129,14 +122,10 @@ RUN rm -f /sbin/init /bin/init \
  && ln -sf ../lib/systemd/systemd /bin/init
 
 
-RUN rm -f /etc/machine-id /var/lib/dbus/machine-id
-
 # Fix permissions
 RUN chown root:syslog /var/log \
  && chmod 755 /etc/default
 
-# HotFix Reboot
-RUN systemctl mask networking
 
 # Clean rootfs from image-builder
 RUN /usr/local/sbin/scw-builder-leave
